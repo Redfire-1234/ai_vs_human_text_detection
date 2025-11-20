@@ -1,12 +1,13 @@
 streamlit
 # Use a slightly older, widely compatible PyTorch version
-# torch==2.0.1
+
 transformers==4.38.2
 sentence-transformers==2.2.2
 accelerate==0.27.2
 lime
 datasets
 scikit-learn
+
 
 
 
