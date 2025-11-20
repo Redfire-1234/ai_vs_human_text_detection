@@ -1,5 +1,9 @@
 AI vs Human Text Classification Using BERT  
 
+Live Demo  
+Try the app here -->  
+[AI vs Human Text Detection App](https://aivshumantextdetection-nhakkghn5p6jwztdwvysji.streamlit.app/)  
+
 References:  
 - [PyTorch](https://pytorch.org/)  
 - [Hugging Face — Transformers](https://huggingface.co/docs/transformers/index)  
