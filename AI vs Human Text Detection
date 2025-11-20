@@ -2,30 +2,78 @@
 !rm -rf /usr/local/lib/python3.12/dist-packages/transformers
 !rm -rf /root/.cache/huggingface
 
-!pip  install -q transformers==4.40.2
-!pip  install -q sentence-transformers==3.0.1
-!pip  install -q accelerate==0.27.2
-!pip  install -q datasets evaluate scikit-learn
+!pip  install -q transformers==4.40.2 # install transformer library
+!pip  install -q sentence-transformers==3.0.1 # used for creating embeddings
+!pip  install -q accelerate==0.27.2 # accelerate helps speed up training on GPU/TPU/CPU
+!pip  install -q datasets evaluate scikit-learn # load NLP dataset
 
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
-from sentence_transformers import SentenceTransformer
-from datasets import load_dataset
+from transformers import AutoTokenizer, AutoModelForSequenceClassification # install right tokenizer, classification model
+from sentence_transformers import SentenceTransformer # sentence embedding
+from datasets import load_dataset # load dataset from huggingface
 
 print("All good!")
 
 import pandas as pd
-
+# dataset for training
 data = {
     "text": [
-        "Artificial intelligence will soon transform the world...",  # human
-        "The economic impact of climate change is significant...",    # human
-        "AI systems are designed to provide coherent and helpful responses based on patterns...", # AI
-        "The model analyzes user input and generates contextual content..."                      # AI
+        # Human-written style (0)
+        "I remember visiting the beach as a kid, the smell of the ocean still stays with me.",
+        "Cooking at home is cheaper, but sometimes I just want to enjoy pizza from outside.",
+        "The flight was delayed for hours and everyone at the airport looked tired and annoyed.",
+        "My best friend and I used to ride bicycles after school near the park.",
+        "I think music has the power to change someone’s mood instantly.",
+        "Last week, I tried gardening and surprisingly enjoyed planting flowers.",
+        "Sports keep me active but I mostly play for fun rather than competition.",
+        "During holidays, my family gathers and we talk for hours around the dinner table.",
+        "The movie I watched yesterday was emotional yet very inspiring.",
+        "Waking up early is hard, but I feel more productive whenever I manage to do it.",
+        "I love reading novels that make me think about life from a different perspective.",
+        "I had to learn how to manage time better when college started getting tough.",
+        "Traveling to new places helps me understand cultures better.",
+        "I recently adopted a puppy and it's bringing so much joy to my life.",
+        "Sometimes I sit alone and reflect on where I am going in life.",
+        "My brother makes the best pancakes, and he always adds extra syrup for me.",
+        "I take a lot of photographs because moments pass quickly.",
+        "The concert last night was loud but incredibly fun.",
+        "Learning new skills online has become so convenient nowadays.",
+        "Every Sunday, I like to take a long walk and relax.",
+        "I get nervous during exams, even when I am well prepared.",
+        "Trying a new hobby always feels exciting at first.",
+        "The café near my house serves the tastiest cold coffee.",
+        "I once lost my phone at a mall and found it after hours of searching.",
+        "Watching sunsets from my rooftop is one of my favorite things.",
+
+        # AI-generated style (1)
+        "Artificial intelligence models process large datasets to identify complex patterns and generate predictions.",
+        "Neural networks consist of layers of interconnected nodes that learn through backpropagation.",
+        "The system evaluates input and adapts based on continuous feedback for optimal performance.",
+        "Language models analyze user queries and generate contextual responses using encoded knowledge.",
+        "Automation technologies enhance operational efficiency across multiple industries.",
+        "Machine learning enables computers to learn without being explicitly programmed.",
+        "Advanced neural architectures improve reasoning abilities and response accuracy.",
+        "AI research continues to explore cognitive capabilities that mimic human thought.",
+        "The algorithm classifies text by extracting semantic and lexical features.",
+        "Predictive analytics provides insights by identifying future events based on historical data.",
+        "Cloud computing supports scalable deployment of machine learning applications.",
+        "Natural language processing helps systems understand and interpret human language.",
+        "The model uses token embedding techniques to represent text numerically.",
+        "Generative AI creates realistic content, including text, images, and audio outputs.",
+        "Reinforcement learning allows agents to make decisions through trial-and-error interactions.",
+        "Neural computation leverages mathematical operations to simulate brain-like processing.",
+        "Deep learning architectures include convolutional, recurrent, and attention-based models.",
+        "Optimization algorithms adjust parameters to minimize prediction errors.",
+        "The system integrates multimodal inputs to improve contextual understanding.",
+        "Robotics combines AI with mechanical engineering to automate physical tasks.",
+        "The classifier learns from labeled examples and generalizes to unseen data.",
+        "Transformer-based models utilize self-attention mechanisms for efficient sequence processing.",
+        "Text generation models produce coherent sentences based on learned statistical patterns.",
+        "Inference speed improves with hardware accelerators such as GPUs and TPUs.",
+        "Digital transformation drives innovation through intelligent data-driven solutions."
     ],
-    "label": [
-        0, 0, 1, 1   # 0 = human, 1 = AI
-    ]
+    "label": [0]*25 + [1]*25
 }
+
 
 df = pd.DataFrame(data)
 df.to_csv("ai_human_dataset.csv", index=False)
@@ -36,12 +84,12 @@ df
 from datasets import load_dataset
 from transformers import AutoTokenizer
 
-tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased") # use pretrained token of bert
 
 import pandas as pd
 
 df = pd.read_csv("ai_human_dataset.csv")
-dataset = load_dataset("csv", data_files={"train": "ai_human_dataset.csv"})
+dataset = load_dataset("csv", data_files={"train": "ai_human_dataset.csv"}) # load HuggingFace dataset
 dataset
 
 
@@ -50,7 +98,7 @@ def tokenize(batch):
         batch["text"],
         padding="max_length",
         truncation=True,
-        max_length=256
+        max_length=512
     )
 
 
@@ -71,19 +119,19 @@ from transformers import DataCollatorWithPadding
 data_collator = DataCollatorWithPadding(tokenizer=tokenizer)
 
 
-from transformers import TrainingArguments
+from transformers import TrainingArguments 
 
 training_args = TrainingArguments(
-    output_dir="bert-ai-human",
-    learning_rate=2e-5,
-    per_device_train_batch_size=2,
-    num_train_epochs=4,
+    output_dir="bert-ai-human", # Directory to save checkpoints
+    learning_rate=2e-5, # learning rate 2e-5 = 0.00002
+    per_device_train_batch_size=2, # number of batch per GPU
+    num_train_epochs=4, 
     weight_decay=0.01,
     logging_steps=1,
     report_to=[]  # <-- disables wandb/other loggers
 )
 
-from transformers import Trainer
+from transformers import Trainer # trainer that handles training and evaluation
 
 trainer = Trainer(
     model=model,
@@ -107,7 +155,7 @@ def predict_text(text):
         return_tensors="pt",
         truncation=True,
         padding=True,
-        max_length=256
+        max_length=512
     )
 
     # Move to device (CPU/GPU)
@@ -147,14 +195,14 @@ loaded_tokenizer = AutoTokenizer.from_pretrained("bert-ai-human-model")
 
 # Step 1: Install required packages
 
-!pip install -q streamlit pyngrok
+!pip install -q streamlit pyngrok # to create web app/ create URL
 !pip install -q lime
 
 
 %%writefile app.py
 import streamlit as st
 import torch
-from transformers import AutoTokenizer, AutoModelForSequenceClassification
+from transformers import AutoTokenizer, AutoModelForSequenceClassification # load the autotokenizer and fine-tune model that we saved earlier
 from lime.lime_text import LimeTextExplainer
 
 st.title("AI vs Human Text Classifier with Explainability")
@@ -168,7 +216,7 @@ if st.button("Predict"):
     model.eval()
 
     # Tokenize input
-    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=256)
+    inputs = tokenizer(text, return_tensors="pt", truncation=True, padding=True, max_length=512)
 
     # Prediction
     with torch.no_grad():
@@ -201,7 +249,7 @@ if st.button("Predict"):
 from pyngrok import ngrok
 
 # Replace 'YOUR_NGROK_AUTHTOKEN' with your actual authtoken from the ngrok dashboard
-ngrok.set_auth_token('YOUR_NGROK-AUTHTOKEN')
+ngrok.set_auth_token('YOUR_NGROK_AUTHTOKEN')
 
 print("ngrok authtoken set!")
 
