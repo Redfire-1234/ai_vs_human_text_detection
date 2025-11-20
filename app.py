@@ -9,8 +9,9 @@ text = st.text_area("Enter text to classify")
 
 if st.button("Predict"):
     # Load model and tokenizer
-    tokenizer = AutoTokenizer.from_pretrained("./bert-ai-human-model")
-    model = AutoModelForSequenceClassification.from_pretrained("./bert-ai-human-model")
+    HF_REPO = "https://huggingface.co/Redfire-1234/bert-ai-human-model"  # <-- CHANGE THIS
+    tokenizer = AutoTokenizer.from_pretrained(HF_REPO)
+    model = AutoModelForSequenceClassification.from_pretrained(HF_REPO)
     model.eval()
 
     # Tokenize input
