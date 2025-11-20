@@ -1,12 +1,13 @@
+torch
 streamlit
-# Use a slightly older, widely compatible PyTorch version
-
+huggingface-hub
 transformers==4.38.2
 sentence-transformers==2.2.2
 accelerate==0.27.2
 lime
 datasets
 scikit-learn
+
 
 
 
