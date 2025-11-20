@@ -1,5 +1,0 @@
-# .streamlit/packages.toml
-[dependencies]
-# This line tells Streamlit Cloud to use a stable Python version
-# which is often compatible with older, stable torch releases.
-python_version = "3.9"
