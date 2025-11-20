@@ -1,0 +1,8 @@
+streamlit
+torch
+transformers==4.40.2
+sentence-transformers==3.0.1
+accelerate==0.27.2
+lime
+datasets
+scikit-learn
