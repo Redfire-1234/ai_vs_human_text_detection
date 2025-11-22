@@ -2,7 +2,7 @@ AI vs Human Text Classification Using BERT
 
 Live Demo  
 Try the app here -->  
-[Try the AI vs Human Text Detection App](https://aivshumantextdetection-vb7yntzyjsffcf6vvjxsls.streamlit.app/)  
+[Try the AI vs Human Text Detection App](https://aivshumantextdetection-6jxccpdktjvkh3ynphztpy.streamlit.app/)  
 
 
 References:  
