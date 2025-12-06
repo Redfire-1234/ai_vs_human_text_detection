@@ -13,24 +13,32 @@ def load_model():
     """Load the model and tokenizer when the app starts"""
     global model, tokenizer
     
-    # Try to load from local directory first (for Docker builds)
-    model_path = "bert-ai-human-model"
-    
-    # If local model doesn't exist, load from Hugging Face
-    if not os.path.exists(model_path):
-        print("Local model not found, loading from Hugging Face...")
-        model_path = "Redfire-1234/bert-ai-human-model"
-    else:
-        print("Loading model from local directory...")
-    
-    print(f"Loading model from: {model_path}")
-    tokenizer = AutoTokenizer.from_pretrained(model_path)
-    model = AutoModelForSequenceClassification.from_pretrained(model_path)
-    model.eval()  # Set to evaluation mode
-    print("Model loaded successfully!")
+    try:
+        # Try to load from local directory first (for Docker builds)
+        model_path = "./bert-ai-human-model"
+        
+        # If local model doesn't exist, load from Hugging Face
+        if not os.path.exists(model_path):
+            print("Local model not found, loading from Hugging Face...")
+            model_path = "Redfire-1234/bert-ai-human-model"
+        else:
+            print("Loading model from local directory...")
+        
+        print(f"Loading model from: {model_path}")
+        tokenizer = AutoTokenizer.from_pretrained(model_path)
+        model = AutoModelForSequenceClassification.from_pretrained(model_path)
+        model.eval()  # Set to evaluation mode
+        print("Model loaded successfully!")
+        
+    except Exception as e:
+        print(f"Error loading model: {e}")
+        raise
 
 def predict_text(text):
     """Predict whether text is AI or Human generated"""
+    if model is None or tokenizer is None:
+        raise Exception("Model not loaded")
+    
     # Tokenize input
     inputs = tokenizer(
         text,
@@ -90,6 +98,7 @@ HTML_TEMPLATE = """
             border-radius: 5px;
             font-size: 14px;
             margin-bottom: 20px;
+            box-sizing: border-box;
         }
         button {
             background-color: #4CAF50;
@@ -103,6 +112,10 @@ HTML_TEMPLATE = """
         }
         button:hover {
             background-color: #45a049;
+        }
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
         }
         .result {
             margin-top: 20px;
@@ -134,6 +147,11 @@ HTML_TEMPLATE = """
             background-color: #4CAF50;
             transition: width 0.3s ease;
         }
+        .loading {
+            text-align: center;
+            color: #666;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -142,7 +160,8 @@ HTML_TEMPLATE = """
         <p style="text-align: center; color: #666;">Enter text below to check if it was written by a human or AI</p>
         
         <textarea id="textInput" placeholder="Enter your text here..."></textarea>
-        <button onclick="classifyText()">Classify Text</button>
+        <button id="classifyBtn" onclick="classifyText()">Classify Text</button>
+        <div id="loading" class="loading" style="display: none;">Analyzing...</div>
         
         <div id="result" class="result">
             <div class="prediction" id="prediction"></div>
@@ -159,11 +178,19 @@ HTML_TEMPLATE = """
     <script>
         async function classifyText() {
             const text = document.getElementById('textInput').value;
+            const btn = document.getElementById('classifyBtn');
+            const loading = document.getElementById('loading');
+            const resultDiv = document.getElementById('result');
             
             if (!text.trim()) {
                 alert('Please enter some text!');
                 return;
             }
+            
+            // Show loading state
+            btn.disabled = true;
+            loading.style.display = 'block';
+            resultDiv.classList.remove('show');
             
             try {
                 const response = await fetch('/predict', {
@@ -182,7 +209,6 @@ HTML_TEMPLATE = """
                 }
                 
                 // Display results
-                const resultDiv = document.getElementById('result');
                 const predictionDiv = document.getElementById('prediction');
                 
                 predictionDiv.textContent = 'Prediction: ' + data.label;
@@ -196,8 +222,20 @@ HTML_TEMPLATE = """
                 resultDiv.classList.add('show');
             } catch (error) {
                 alert('Error: ' + error.message);
+            } finally {
+                // Hide loading state
+                btn.disabled = false;
+                loading.style.display = 'none';
             }
         }
+        
+        // Allow Enter key in textarea (Shift+Enter for new line)
+        document.getElementById('textInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                classifyText();
+            }
+        });
     </script>
 </body>
 </html>
@@ -226,16 +264,25 @@ def predict():
         return jsonify(result)
     
     except Exception as e:
+        print(f"Error in predict endpoint: {e}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/health')
 def health():
     """Health check endpoint"""
-    return jsonify({'status': 'healthy', 'model_loaded': model is not None})
+    return jsonify({
+        'status': 'healthy', 
+        'model_loaded': model is not None,
+        'tokenizer_loaded': tokenizer is not None
+    })
+
+# Load model when the module is imported
+print("Starting application...")
+load_model()
+print("Application ready!")
 
 if __name__ == '__main__':
-    # Load model when app starts
-    load_model()
-    
-    # Run the app
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    # Get port from environment variable or default to 5000
+    port = int(os.environ.get('PORT', 5000))
+    print(f"Starting Flask app on port {port}")
+    app.run(host='0.0.0.0', port=port, debug=False)
