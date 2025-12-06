@@ -13,12 +13,17 @@ def load_model():
     """Load the model and tokenizer when the app starts"""
     global model, tokenizer
     
+    # Try to load from local directory first (for Docker builds)
     model_path = "bert-ai-human-model"
     
+    # If local model doesn't exist, load from Hugging Face
     if not os.path.exists(model_path):
-        raise FileNotFoundError(f"Model not found at {model_path}. Please ensure the model is in the correct directory.")
+        print("Local model not found, loading from Hugging Face...")
+        model_path = "Redfire-1234/bert-ai-human-model"
+    else:
+        print("Loading model from local directory...")
     
-    print("Loading model and tokenizer...")
+    print(f"Loading model from: {model_path}")
     tokenizer = AutoTokenizer.from_pretrained(model_path)
     model = AutoModelForSequenceClassification.from_pretrained(model_path)
     model.eval()  # Set to evaluation mode
@@ -234,6 +239,3 @@ if __name__ == '__main__':
     
     # Run the app
     app.run(host='0.0.0.0', port=5000, debug=False)
-
-
-
